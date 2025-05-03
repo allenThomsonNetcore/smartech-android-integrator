@@ -6,8 +6,8 @@ A Python-based tool to automate the integration of Smartech SDK into Android pro
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/smartech-sdk-integrator.git
-cd smartech-sdk-integrator
+git clone https://github.com/allenThomsonNetcore/smartech-android-integrator.git
+cd smartech-android-integrato
 ```
 
 2. Create a virtual environment (recommended):
@@ -16,10 +16,6 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
 
 ## Usage
 
@@ -57,7 +53,6 @@ smartech-sdk-integrator/
 │   ├── push/          # Push notification handling
 │   ├── backup/        # Backup configuration
 │   └── main/          # Main integration logic
-├── requirements.txt
 └── README.md
 ```
 
@@ -85,6 +80,4 @@ Please ensure your PR:
 
 For major changes, please open an issue first to discuss what you would like to change.
 
-## License
-
-[Your chosen license] 
+## Version 1.0.0
