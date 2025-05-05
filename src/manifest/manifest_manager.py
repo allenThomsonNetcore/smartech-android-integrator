@@ -60,8 +60,8 @@ def inject_push_meta_tag(manifest_path, ask_permission):
 
     if 'SMT_ASK_PERMISSION' not in content:
         content = re.sub(r'(<application\b[^>]*>)',
-                         r'\1\n        <meta-data android:name="SMT_ASK_PERMISSION" android:value="{}" />'.format(
-                             'true' if ask_permission else 'false'),
+                         r'\1\n        <meta-data android:name="SMT_IS_AUTO_ASK_NOTIFICATION_PERMISSION" android:value="{}" />'.format(
+                             '1' if ask_permission else '0'),
                          content)
 
     with open(manifest_path, 'w') as f:

@@ -14,10 +14,8 @@ def create_backup_xml_files(project_dir, target_sdk, manifest_path):
         with open(backup_file_path, 'w') as f:
             f.write("""<?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <exclude domain="sharedpref" path="."/>
-    <exclude domain="database" path="."/>
-    <exclude domain="file" path="."/>
-    <exclude domain="external" path="."/>
+    <include domain="sharedpref" path="smt_guid_preferences.xml"/>
+    <include domain="sharedpref" path="smt_preferences_guid.xml"/>
 </full-backup-content>
 """)
 
@@ -27,17 +25,9 @@ def create_backup_xml_files(project_dir, target_sdk, manifest_path):
         with open(backup_file_path, 'w') as f:
             f.write("""<?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
-    <cloud-backup>
-        <exclude domain="sharedpref" path="."/>
-        <exclude domain="database" path="."/>
-        <exclude domain="file" path="."/>
-        <exclude domain="external" path="."/>
-    </cloud-backup>
-    <device-transfer>
-        <exclude domain="sharedpref" path="."/>
-        <exclude domain="database" path="."/>
-        <exclude domain="file" path="."/>
-        <exclude domain="external" path="."/>
-    </device-transfer>
+      <cloud-backup disableIfNoEncryptionCapabilities="false">
+       <include  domain="sharedpref" path="smt_guid_preferences.xml" />
+       <include domain="sharedpref" path="smt_preferences_guid.xml" />
+   </cloud-backup>
 </data-extraction-rules>
 """) 
