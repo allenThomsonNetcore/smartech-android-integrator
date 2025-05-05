@@ -11,15 +11,20 @@ def modify_manifest(manifest_path, app_id, app_class_relative, target_sdk):
                          r'\1\n        <meta-data android:name="SMT_APP_ID" android:value="{}" />'.format(app_id),
                          content)
 
-    # Add android:name if not present in application tag
-    if not re.search(r'<application[^>]*android:name=', content):
-        content = re.sub(r'<application\b',
-                         r'<application android:name=".{}"'.format(app_class_relative),
-                         content)
+    # Always set android:name to the application class path
+    if re.search(r'<application[^>]*android:name=', content):
+        # Replace existing android:name
+     # Only update android:name inside the <application> tag
+        content = re.sub(
+        r'(<application[^>]*?)android:name="[^"]*"([^>]*>)',
+        rf'\1android:name="{app_class_relative}"\2',
+        content
+        )
+
     else:
-        # Update existing android:name to include dot prefix
-        content = re.sub(r'android:name="([^"]*)"',
-                         lambda m: f'android:name=".{m.group(1)}"' if not m.group(1).startswith('.') else m.group(0),
+        # Add android:name if not present
+        content = re.sub(r'<application\b',
+                         f'<application android:name="{app_class_relative}"',
                          content)
 
     # Ensure allowBackup is true
