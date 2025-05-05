@@ -7,7 +7,7 @@ A Python-based tool to automate the integration of Smartech SDK into Android pro
 1. Clone the repository:
 ```bash
 git clone https://github.com/allenThomsonNetcore/smartech-android-integrator.git
-cd smartech-android-integrato
+cd smartech-android-integrator
 ```
 
 2. Create a virtual environment (recommended):
@@ -80,4 +80,4 @@ Please ensure your PR:
 
 For major changes, please open an issue first to discuss what you would like to change.
 
-## Version 1.0.0
+## Version B1.0.1

@@ -3,7 +3,7 @@ import sys
 from ..application.application_manager import find_application_class, create_application_class, inject_sdk_initialization
 from ..deeplink.deeplink_manager import create_deeplink_receiver
 from ..manifest.manifest_manager import modify_manifest, inject_push_meta_tag, register_firebase_service
-from ..gradle.gradle_manager import extract_target_sdk, extract_application_id, modify_gradle, inject_push_dependency
+from ..gradle.gradle_manager import extract_target_sdk, extract_application_id, modify_gradle, inject_push_dependency, modify_settings_gradle
 from ..push.push_manager import find_push_service_class, create_push_service_class, inject_push_logic
 from ..backup.backup_manager import create_backup_xml_files
 
@@ -77,8 +77,22 @@ def integrate_smartech(project_dir, app_id):
         if os.path.exists(gradle_kts_path):
             gradle_path = gradle_kts_path
 
+        # Check for settings.gradle file
+        settings_path = os.path.join(project_dir, "settings.gradle")
+        settings_kts_path = os.path.join(project_dir, "settings.gradle.kts")
+        if os.path.exists(settings_kts_path):
+            settings_path = settings_kts_path
+        elif not os.path.exists(settings_path):
+            print("Error: Could not find settings.gradle or settings.gradle.kts file")
+            return False
+
+        # Add Smartech repository to settings.gradle
+        print("1. Adding Smartech repository...")
+        modify_settings_gradle(settings_path)
+        print("   ✅ Added Smartech repository to settings.gradle")
+
         # Extract target SDK version and application ID
-        print("1. Extracting project information...")
+        print("2. Extracting project information...")
         target_sdk = extract_target_sdk(gradle_path)
         application_id = extract_application_id(gradle_path)
         if not application_id:
@@ -88,7 +102,7 @@ def integrate_smartech(project_dir, app_id):
         print(f"   🔔 Application ID: {application_id}")
 
         # Find or create application class
-        print("2. Setting up application class...")
+        print("3. Setting up application class...")
         app_class_path, language = find_application_class(src_dir)
         if not app_class_path:
             app_class_path = create_application_class(src_dir, language,application_id)
@@ -97,28 +111,28 @@ def integrate_smartech(project_dir, app_id):
             print("   ⚠️ Found existing application class")
         
         # Create deep link receiver
-        print("3. Setting up deep link receiver...")
+        print("4. Setting up deep link receiver...")
         create_deeplink_receiver(src_dir, language,application_id)
         print("   ✅ Deep link receiver configured")
 
         # Modify manifest
-        print("4. Updating Android manifest...")
+        print("5. Updating Android manifest...")
         app_class_relative = os.path.relpath(app_class_path, src_dir).replace(os.sep, '.').replace('.java', '').replace('.kt', '')
         modify_manifest(manifest_path, app_id, app_class_relative, target_sdk)
         print("   ✅ Manifest updated with Smartech configurations")
 
         # Modify gradle
-        print("5. Updating Gradle configuration...")
+        print("6. Updating Gradle configuration...")
         modify_gradle(gradle_path)
         print("   ✅ Gradle configuration updated")
 
         # Create backup configuration files
-        print("6. Setting up backup configuration...")
+        print("7. Setting up backup configuration...")
         create_backup_xml_files(project_dir, target_sdk, manifest_path)
         print("   ✅ Backup configuration created")
 
         # Inject SDK initialization
-        print("7. Injecting SDK initialization...")
+        print("8. Injecting SDK initialization...")
         inject_sdk_initialization(app_class_path, language, target_sdk)
         print("   ✅ SDK initialization code injected")
 
