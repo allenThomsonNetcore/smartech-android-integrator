@@ -271,7 +271,7 @@ def integrate_smartech(project_dir, app_id):
             # Manifest meta-data
             integrate_product_experience_manifest(manifest_path, hansel_app_id, hansel_app_key)
             # Listener classes
-            integrate_product_experience_listeners(src_dir, language)
+            integrate_product_experience_listeners(src_dir, language,application_id)
             # Register listeners in application class
             register_product_experience_listeners(app_class_path, language)
             print("   ✅ Product Experience SDK integration completed!")

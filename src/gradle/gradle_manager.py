@@ -40,7 +40,7 @@ def modify_gradle(gradle_path):
     is_kts = gradle_path.endswith('.kts')
     
     # Add core dependency if not present
-    core_dependency = 'implementation("com.netcore.android:smartech-base:3.6.2")' if is_kts else 'implementation "com.netcore.android:smartech-base:3.6.2"'
+    core_dependency = 'implementation("com.netcore.android:smartech-sdk:3.6.2")' if is_kts else 'implementation "com.netcore.android:smartech-sdk:3.6.2"'
     if 'com.netcore.android:smartech-base' not in content:
         # Find the dependencies block
         if is_kts:
@@ -88,7 +88,7 @@ def inject_push_dependency(gradle_path):
     is_kts = gradle_path.endswith('.kts')
     
     # Add push dependency if not present
-    push_dependency = 'implementation("com.netcore.android:smartech-push:3.6.2")' if is_kts else 'implementation "com.netcore.android:smartech-push:3.6.2"'
+    push_dependency = 'implementation("com.netcore.android:smartech-push:3.5.6")' if is_kts else 'implementation "com.netcore.android:smartech-push:3.5.6"'
     if 'com.netcore.android:smartech-push' not in content:
         # Find the dependencies block
         if is_kts:
@@ -107,7 +107,7 @@ def integrate_product_experience_dependency(gradle_path, ui_type):
     if ui_type == 'compose':
         dep = 'implementation("com.netcore.android:smartech-nudges-compose:10.5.2")' if is_kts else 'implementation "com.netcore.android:smartech-nudges-compose:10.5.2"'
     else:
-        dep = 'implementation("com.netcore.android:smartech-nudges:10.2.3")' if is_kts else 'implementation "com.netcore.android:smartech-nudges:10.2.3"'
+        dep = 'implementation("com.netcore.android:smartech-nudges:10.2.5")' if is_kts else 'implementation "com.netcore.android:smartech-nudges:10.2.5"'
     if 'com.netcore.android:smartech-nudges' not in content and 'com.netcore.android:smartech-nudges-compose' not in content:
         content = re.sub(r'(dependencies\s*\{)', r'\1\n    ' + dep, content)
         with open(gradle_path, 'w') as f:

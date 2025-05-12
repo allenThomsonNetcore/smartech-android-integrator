@@ -168,53 +168,71 @@ def inject_notification_appearance(app_class_path, language, notification_option
     with open(app_class_path, 'r') as f:
         content = f.read()
 
-    # Build the options code based on user input
-    if language == 'kotlin':
-        options_code = "val options = SMTNotificationOptions(context)\n"
-        if notification_options.get('brand_logo'):
-            options_code += f'options.brandLogo = "{notification_options["brand_logo"]}"\n'
-        if notification_options.get('large_icon'):
-            options_code += f'options.largeIcon = "{notification_options["large_icon"]}"\n'
-        if notification_options.get('small_icon'):
-            options_code += f'options.smallIcon = "{notification_options["small_icon"]}"\n'
-        if notification_options.get('small_icon_transparent'):
-            options_code += f'options.smallIconTransparent = "{notification_options["small_icon_transparent"]}"\n'
-        if notification_options.get('transparent_bg_color'):
-            options_code += f'options.transparentIconBgColor = "{notification_options["transparent_bg_color"]}"\n'
-        if notification_options.get('placeholder_icon'):
-            options_code += f'options.placeHolderIcon = "{notification_options["placeholder_icon"]}"\n'
-        options_code += 'SmartPush.getInstance(WeakReference(context)).setNotificationOptions(options)'
-    else:
-        options_code = "SMTNotificationOptions options = new SMTNotificationOptions(this);\n"
-        if notification_options.get('brand_logo'):
-            options_code += f'options.setBrandLogo("{notification_options["brand_logo"]}");\n'
-        if notification_options.get('large_icon'):
-            options_code += f'options.setLargeIcon("{notification_options["large_icon"]}");\n'
-        if notification_options.get('small_icon'):
-            options_code += f'options.setSmallIcon("{notification_options["small_icon"]}");\n'
-        if notification_options.get('small_icon_transparent'):
-            options_code += f'options.setSmallIconTransparent("{notification_options["small_icon_transparent"]}");\n'
-        if notification_options.get('transparent_bg_color'):
-            options_code += f'options.setTransparentIconBgColor("{notification_options["transparent_bg_color"]}");\n'
-        if notification_options.get('placeholder_icon'):
-            options_code += f'options.setPlaceHolderIcon("{notification_options["placeholder_icon"]}");\n'
-        options_code += 'SmartPush.getInstance(new WeakReference<>(this)).setNotificationOptions(options);'
-
-    # Check if SMTNotificationOptions is already present
-    if 'SMTNotificationOptions' in content:
-        # Update existing notification options
+    # Check if setNotificationOptions exists
+    if 'setNotificationOptions' in content:
+        # Update existing options
         if language == 'kotlin':
-            # Find the entire block from options creation to setNotificationOptions
-            pattern = r'val\s+options\s*=\s*SMTNotificationOptions\([^)]*\)[^}]*SmartPush\.getInstance\([^)]*\)\.setNotificationOptions\(options\)'
-            if re.search(pattern, content):
-                content = re.sub(pattern, options_code, content)
+            for key, value in notification_options.items():
+                if key == 'brand_logo':
+                    content = re.sub(r'options\.brandLogo\s*=\s*"[^"]*"', f'options.brandLogo = "{value}"', content)
+                elif key == 'large_icon':
+                    content = re.sub(r'options\.largeIcon\s*=\s*"[^"]*"', f'options.largeIcon = "{value}"', content)
+                elif key == 'small_icon':
+                    content = re.sub(r'options\.smallIcon\s*=\s*"[^"]*"', f'options.smallIcon = "{value}"', content)
+                elif key == 'small_icon_transparent':
+                    content = re.sub(r'options\.smallIconTransparent\s*=\s*"[^"]*"', f'options.smallIconTransparent = "{value}"', content)
+                elif key == 'transparent_bg_color':
+                    content = re.sub(r'options\.transparentIconBgColor\s*=\s*"[^"]*"', f'options.transparentIconBgColor = "{value}"', content)
+                elif key == 'placeholder_icon':
+                    content = re.sub(r'options\.placeHolderIcon\s*=\s*"[^"]*"', f'options.placeHolderIcon = "{value}"', content)
         else:
-            # Find the entire block from options creation to setNotificationOptions
-            pattern = r'SMTNotificationOptions\s+options\s*=\s*new\s+SMTNotificationOptions\([^)]*\);[^;]*SmartPush\.getInstance\([^)]*\)\.setNotificationOptions\(options\);'
-            if re.search(pattern, content):
-                content = re.sub(pattern, options_code, content)
+            for key, value in notification_options.items():
+                if key == 'brand_logo':
+                    content = re.sub(r'options\.setBrandLogo\("[^"]*"\)', f'options.setBrandLogo("{value}")', content)
+                elif key == 'large_icon':
+                    content = re.sub(r'options\.setLargeIcon\("[^"]*"\)', f'options.setLargeIcon("{value}")', content)
+                elif key == 'small_icon':
+                    content = re.sub(r'options\.setSmallIcon\("[^"]*"\)', f'options.setSmallIcon("{value}")', content)
+                elif key == 'small_icon_transparent':
+                    content = re.sub(r'options\.setSmallIconTransparent\("[^"]*"\)', f'options.setSmallIconTransparent("{value}")', content)
+                elif key == 'transparent_bg_color':
+                    content = re.sub(r'options\.setTransparentIconBgColor\("[^"]*"\)', f'options.setTransparentIconBgColor("{value}")', content)
+                elif key == 'placeholder_icon':
+                    content = re.sub(r'options\.setPlaceHolderIcon\("[^"]*"\)', f'options.setPlaceHolderIcon("{value}")', content)
     else:
-        # Add notification options after SDK initialization
+        # Add new notification options
+        if language == 'kotlin':
+            options_code = "val options = SMTNotificationOptions(context)\n"
+            if notification_options.get('brand_logo'):
+                options_code += f'options.brandLogo = "{notification_options["brand_logo"]}"\n'
+            if notification_options.get('large_icon'):
+                options_code += f'options.largeIcon = "{notification_options["large_icon"]}"\n'
+            if notification_options.get('small_icon'):
+                options_code += f'options.smallIcon = "{notification_options["small_icon"]}"\n'
+            if notification_options.get('small_icon_transparent'):
+                options_code += f'options.smallIconTransparent = "{notification_options["small_icon_transparent"]}"\n'
+            if notification_options.get('transparent_bg_color'):
+                options_code += f'options.transparentIconBgColor = "{notification_options["transparent_bg_color"]}"\n'
+            if notification_options.get('placeholder_icon'):
+                options_code += f'options.placeHolderIcon = "{notification_options["placeholder_icon"]}"\n'
+            options_code += 'SmartPush.getInstance(WeakReference(context)).setNotificationOptions(options)'
+        else:
+            options_code = "SMTNotificationOptions options = new SMTNotificationOptions(this);\n"
+            if notification_options.get('brand_logo'):
+                options_code += f'options.setBrandLogo("{notification_options["brand_logo"]}");\n'
+            if notification_options.get('large_icon'):
+                options_code += f'options.setLargeIcon("{notification_options["large_icon"]}");\n'
+            if notification_options.get('small_icon'):
+                options_code += f'options.setSmallIcon("{notification_options["small_icon"]}");\n'
+            if notification_options.get('small_icon_transparent'):
+                options_code += f'options.setSmallIconTransparent("{notification_options["small_icon_transparent"]}");\n'
+            if notification_options.get('transparent_bg_color'):
+                options_code += f'options.setTransparentIconBgColor("{notification_options["transparent_bg_color"]}");\n'
+            if notification_options.get('placeholder_icon'):
+                options_code += f'options.setPlaceHolderIcon("{notification_options["placeholder_icon"]}");\n'
+            options_code += 'SmartPush.getInstance(new WeakReference<>(this)).setNotificationOptions(options);'
+
+        # Add after SDK initialization
         if language == 'kotlin':
             content = re.sub(r'(Smartech\.getInstance\(WeakReference\(applicationContext\)\)\.initializeSdk\(this\))',
                             r'\1\n        ' + options_code,
@@ -227,62 +245,66 @@ def inject_notification_appearance(app_class_path, language, notification_option
     with open(app_class_path, 'w') as f:
         f.write(content)
 
-def integrate_product_experience_listeners(src_dir, language):
+def integrate_product_experience_listeners(src_dir, language,application_id):
     """Create or update HanselInternalEventsListener and HanselDeepLinkListener classes."""
     hansel_event_listener_path = os.path.join(src_dir, "HanselInternalEventsListenerImpl.kt" if language == 'kotlin' else "HanselInternalEventsListenerImpl.java")
     hansel_deeplink_listener_path = os.path.join(src_dir, "HanselDeepLinkListenerImpl.kt" if language == 'kotlin' else "HanselDeepLinkListenerImpl.java")
 
     # HanselInternalEventsListener
     if language == 'kotlin':
-        event_listener_code = '''
+        event_listener_code = f'''
+package {application_id}
 import io.hansel.ujmtracker.HanselInternalEventsListener
 import com.netcore.android.Smartech
 import java.lang.ref.WeakReference
 
-class HanselInternalEventsListenerImpl(val context: android.content.Context) : HanselInternalEventsListener {
-    override fun onEvent(eventName: String, dataFromHansel: HashMap<*, *>) {
+class HanselInternalEventsListenerImpl(val context: android.content.Context) : HanselInternalEventsListener {{
+    override fun onEvent(eventName: String, dataFromHansel: HashMap<*, *>) {{
         Smartech.getInstance(WeakReference(context)).trackEvent(eventName, dataFromHansel)
         // You can also call your Analytics platform trackEvent to pass the data
-    }
-}
+    }}
+}}
 '''
-        deeplink_listener_code = '''
+        deeplink_listener_code = f'''
+package {application_id}
 import io.hansel.ujmtracker.HanselDeepLinkListener
 
-class HanselDeepLinkListenerImpl : HanselDeepLinkListener {
-    override fun onLaunchUrl(s: String) {
+class HanselDeepLinkListenerImpl : HanselDeepLinkListener {{
+    override fun onLaunchUrl(s: String) {{
         // implementation here
-    }
-}
+    }}
+}}
 '''
     else:
-        event_listener_code = '''
+        event_listener_code = f'''
+package {application_id}
 import io.hansel.ujmtracker.HanselInternalEventsListener;
 import com.netcore.android.Smartech;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
-public class HanselInternalEventsListenerImpl implements HanselInternalEventsListener {
+public class HanselInternalEventsListenerImpl implements HanselInternalEventsListener {{
     private final android.content.Context context;
-    public HanselInternalEventsListenerImpl(android.content.Context context) {
+    public HanselInternalEventsListenerImpl(android.content.Context context) {{
         this.context = context;
-    }
+    }}
     @Override
-    public void onEvent(String eventName, HashMap dataFromHansel) {
+    public void onEvent(String eventName, HashMap dataFromHansel) {{
         Smartech.getInstance(new WeakReference<>(context)).trackEvent(eventName, dataFromHansel);
         // You can also call your Analytics platform trackEvent to pass the data
-    }
-}
+    }}
+}}
 '''
-        deeplink_listener_code = '''
+        deeplink_listener_code = f'''
+package {application_id}
 import io.hansel.ujmtracker.HanselDeepLinkListener;
 
-public class HanselDeepLinkListenerImpl implements HanselDeepLinkListener {
+public class HanselDeepLinkListenerImpl implements HanselDeepLinkListener {{
     @Override
-    public void onLaunchUrl(String s) {
+    public void onLaunchUrl(String s) {{
         // implementation here
-    }
-}
+    }}
+}}
 '''
     # Write or update event listener
     with open(hansel_event_listener_path, 'w') as f:
@@ -307,8 +329,8 @@ def register_product_experience_listeners(app_class_path, language):
             content = re.sub(r'(Smartech\.getInstance\(WeakReference\(applicationContext\)\)\.initializeSdk\(this\))',
                             r'\1\n' + registration_code,
                             content)
-        if 'import io.hansel.ujmtracker.HanselTracker' not in content:
-            content = import_code + content
+        # if 'import io.hansel.ujmtracker.HanselTracker' not in content:
+        #     content = import_code + content
     else:
         import_code = 'import io.hansel.ujmtracker.HanselTracker;\nimport io.hansel.ujmtracker.Hansel;\n'
         registration_code = '''
@@ -320,7 +342,7 @@ def register_product_experience_listeners(app_class_path, language):
             content = re.sub(r'(Smartech\.getInstance\(new\s+WeakReference<>\(this\)\)\.initializeSdk\(this\);)',
                             r'\1\n' + registration_code,
                             content)
-        if 'import io.hansel.ujmtracker.HanselTracker;' not in content:
-            content = import_code + content
+        # if 'import io.hansel.ujmtracker.HanselTracker;' not in content:
+        #     content = import_code + content
     with open(app_class_path, 'w') as f:
         f.write(content) 

@@ -125,6 +125,9 @@ def inject_location_tracking_meta_tag(manifest_path, enable_location):
                              '1' if enable_location else '0'),
                          content)
 
+    with open(manifest_path, 'w') as f:
+        f.write(content)
+
 def integrate_product_experience_manifest(manifest_path, hansel_app_id, hansel_app_key):
     """Inject Hansel App ID and App Key as meta-data in the manifest under <application>."""
     with open(manifest_path, 'r') as f:
