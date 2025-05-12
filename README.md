@@ -80,4 +80,4 @@ Please ensure your PR:
 
 For major changes, please open an issue first to discuss what you would like to change.
 
-## Version B1.0.4
+## Version B1.0.5
