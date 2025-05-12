@@ -225,4 +225,102 @@ def inject_notification_appearance(app_class_path, language, notification_option
                             content)
 
     with open(app_class_path, 'w') as f:
+        f.write(content)
+
+def integrate_product_experience_listeners(src_dir, language):
+    """Create or update HanselInternalEventsListener and HanselDeepLinkListener classes."""
+    hansel_event_listener_path = os.path.join(src_dir, "HanselInternalEventsListenerImpl.kt" if language == 'kotlin' else "HanselInternalEventsListenerImpl.java")
+    hansel_deeplink_listener_path = os.path.join(src_dir, "HanselDeepLinkListenerImpl.kt" if language == 'kotlin' else "HanselDeepLinkListenerImpl.java")
+
+    # HanselInternalEventsListener
+    if language == 'kotlin':
+        event_listener_code = '''
+import io.hansel.ujmtracker.HanselInternalEventsListener
+import com.netcore.android.Smartech
+import java.lang.ref.WeakReference
+
+class HanselInternalEventsListenerImpl(val context: android.content.Context) : HanselInternalEventsListener {
+    override fun onEvent(eventName: String, dataFromHansel: HashMap<*, *>) {
+        Smartech.getInstance(WeakReference(context)).trackEvent(eventName, dataFromHansel)
+        // You can also call your Analytics platform trackEvent to pass the data
+    }
+}
+'''
+        deeplink_listener_code = '''
+import io.hansel.ujmtracker.HanselDeepLinkListener
+
+class HanselDeepLinkListenerImpl : HanselDeepLinkListener {
+    override fun onLaunchUrl(s: String) {
+        // implementation here
+    }
+}
+'''
+    else:
+        event_listener_code = '''
+import io.hansel.ujmtracker.HanselInternalEventsListener;
+import com.netcore.android.Smartech;
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+
+public class HanselInternalEventsListenerImpl implements HanselInternalEventsListener {
+    private final android.content.Context context;
+    public HanselInternalEventsListenerImpl(android.content.Context context) {
+        this.context = context;
+    }
+    @Override
+    public void onEvent(String eventName, HashMap dataFromHansel) {
+        Smartech.getInstance(new WeakReference<>(context)).trackEvent(eventName, dataFromHansel);
+        // You can also call your Analytics platform trackEvent to pass the data
+    }
+}
+'''
+        deeplink_listener_code = '''
+import io.hansel.ujmtracker.HanselDeepLinkListener;
+
+public class HanselDeepLinkListenerImpl implements HanselDeepLinkListener {
+    @Override
+    public void onLaunchUrl(String s) {
+        // implementation here
+    }
+}
+'''
+    # Write or update event listener
+    with open(hansel_event_listener_path, 'w') as f:
+        f.write(event_listener_code)
+    # Write or update deeplink listener
+    with open(hansel_deeplink_listener_path, 'w') as f:
+        f.write(deeplink_listener_code)
+
+def register_product_experience_listeners(app_class_path, language):
+    """Register Hansel listeners in the application class after SDK initialization."""
+    with open(app_class_path, 'r') as f:
+        content = f.read()
+    if language == 'kotlin':
+        # Import and registration code
+        import_code = 'import io.hansel.ujmtracker.HanselTracker\nimport io.hansel.ujmtracker.Hansel\n'
+        registration_code = '''
+        val hanselInternalEventsListener = HanselInternalEventsListenerImpl(this)
+        HanselTracker.registerListener(hanselInternalEventsListener)
+        Hansel.registerHanselDeeplinkListener(HanselDeepLinkListenerImpl())
+'''
+        if 'HanselTracker.registerListener' not in content:
+            content = re.sub(r'(Smartech\.getInstance\(WeakReference\(applicationContext\)\)\.initializeSdk\(this\))',
+                            r'\1\n' + registration_code,
+                            content)
+        if 'import io.hansel.ujmtracker.HanselTracker' not in content:
+            content = import_code + content
+    else:
+        import_code = 'import io.hansel.ujmtracker.HanselTracker;\nimport io.hansel.ujmtracker.Hansel;\n'
+        registration_code = '''
+        HanselInternalEventsListenerImpl hanselInternalEventsListener = new HanselInternalEventsListenerImpl(this);
+        HanselTracker.registerListener(hanselInternalEventsListener);
+        Hansel.registerHanselDeeplinkListener(new HanselDeepLinkListenerImpl());
+'''
+        if 'HanselTracker.registerListener' not in content:
+            content = re.sub(r'(Smartech\.getInstance\(new\s+WeakReference<>\(this\)\)\.initializeSdk\(this\);)',
+                            r'\1\n' + registration_code,
+                            content)
+        if 'import io.hansel.ujmtracker.HanselTracker;' not in content:
+            content = import_code + content
+    with open(app_class_path, 'w') as f:
         f.write(content) 
