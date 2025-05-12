@@ -63,9 +63,14 @@ def inject_push_meta_tag(manifest_path, ask_permission):
     with open(manifest_path, 'r') as f:
         content = f.read()
 
-    if 'SMT_ASK_PERMISSION' not in content:
+    if 'SMT_IS_AUTO_ASK_NOTIFICATION_PERMISSION' not in content:
         content = re.sub(r'(<application\b[^>]*>)',
                          r'\1\n        <meta-data android:name="SMT_IS_AUTO_ASK_NOTIFICATION_PERMISSION" android:value="{}" />'.format(
+                             '1' if ask_permission else '0'),
+                         content)
+    else:
+        content = re.sub(r'<meta-data android:name="SMT_IS_AUTO_ASK_NOTIFICATION_PERMISSION" android:value="[^"]*" ?/>',
+                         r'<meta-data android:name="SMT_IS_AUTO_ASK_NOTIFICATION_PERMISSION" android:value="{}" />'.format(
                              '1' if ask_permission else '0'),
                          content)
 
@@ -100,6 +105,25 @@ def register_firebase_service(manifest_path, service_name):
     # Case 3: No <application> tag at all — raise error or create it (optional)
     else:
         raise ValueError("No <application> tag found in AndroidManifest.xml.")
+
+    with open(manifest_path, 'w') as f:
+        f.write(content)
+
+def inject_location_tracking_meta_tag(manifest_path, enable_location):
+    """Inject location tracking meta tag into the manifest."""
+    with open(manifest_path, 'r') as f:
+        content = f.read()
+
+    if 'SMT_IS_AUTO_FETCHED_LOCATION' not in content:
+        content = re.sub(r'(<application\b[^>]*>)',
+                         r'\1\n        <meta-data android:name="SMT_IS_AUTO_FETCHED_LOCATION" android:value="{}" />'.format(
+                             '1' if enable_location else '0'),
+                         content)
+    else:
+        content = re.sub(r'<meta-data android:name="SMT_IS_AUTO_FETCHED_LOCATION" android:value="[^"]*" ?/>',
+                         r'<meta-data android:name="SMT_IS_AUTO_FETCHED_LOCATION" android:value="{}" />'.format(
+                             '1' if enable_location else '0'),
+                         content)
 
     with open(manifest_path, 'w') as f:
         f.write(content)
