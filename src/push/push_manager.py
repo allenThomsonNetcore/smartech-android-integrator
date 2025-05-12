@@ -43,7 +43,7 @@ def inject_push_logic(push_class_path, language):
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
         if(remoteMessage.getData().containsKey("smtSrc")){
-            Smartech.getInstance(WeakReference(applicationContext)).handlePushNotification(remoteMessage)
+        Smartech.getInstance(WeakReference(applicationContext)).handlePushNotification(remoteMessage)
         }
     }
 }""",
@@ -82,10 +82,10 @@ def inject_push_logic(push_class_path, language):
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-        if(remoteMessage.getData().containsKey("smtSrc")){
+         if(remoteMessage.getData().containsKey("smtSrc")){
             Smartech.getInstance(new WeakReference<>(getApplicationContext())).handlePushNotification(remoteMessage);
         }
-    }
+            }
 }""",
                              content)
         elif 'onMessageReceived' in content and 'handlePushNotification' not in content:
@@ -119,10 +119,10 @@ import java.lang.ref.WeakReference
 class MyFirebaseMessagingService : FirebaseMessagingService() {{
     override fun onMessageReceived(remoteMessage: RemoteMessage) {{
         super.onMessageReceived(remoteMessage)
-        if(remoteMessage.getData().containsKey("smtSrc")){{
-            Smartech.getInstance(WeakReference(applicationContext)).handlePushNotification(remoteMessage)
+         if(remoteMessage.getData().containsKey("smtSrc")){{
+        Smartech.getInstance(WeakReference(applicationContext)).handlePushNotification(remoteMessage)
         }}
-    }}
+     }}
 
     override fun onNewToken(token: String) {{
         super.onNewToken(token)
@@ -145,10 +145,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {{
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {{
         super.onMessageReceived(remoteMessage);
-        if(remoteMessage.getData().containsKey("smtSrc")){{
+         if(remoteMessage.getData().containsKey("smtSrc")){{
             Smartech.getInstance(new WeakReference<>(getApplicationContext())).handlePushNotification(remoteMessage);
         }}
-    }}
+            }}
 
     @Override
     public void onNewToken(@NonNull String token) {{

@@ -1,6 +1,6 @@
 import os
 import sys
-from ..application.application_manager import find_application_class, create_application_class, inject_sdk_initialization
+from ..application.application_manager import find_application_class, create_application_class, inject_sdk_initialization, inject_debug_level, inject_notification_appearance
 from ..deeplink.deeplink_manager import create_deeplink_receiver
 from ..manifest.manifest_manager import modify_manifest, inject_push_meta_tag, register_firebase_service
 from ..gradle.gradle_manager import extract_target_sdk, extract_application_id, modify_gradle, inject_push_dependency, modify_settings_gradle
@@ -136,6 +136,20 @@ def integrate_smartech(project_dir, app_id):
         inject_sdk_initialization(app_class_path, language, target_sdk)
         print("   ✅ SDK initialization code injected")
 
+        # Ask about debug logs
+        while True:
+            enable_debug = input("\nDo you want to enable debug logs? (yes/no): ").strip().lower()
+            if enable_debug in ['yes', 'no']:
+                break
+            print("Error: Please enter 'yes' or 'no'.")
+
+        # Inject debug level setting
+        print("9. Setting debug level...")
+        inject_debug_level(app_class_path, language, enable_debug == 'yes')
+        print(f"   ✅ Debug logs {'enabled' if enable_debug == 'yes' else 'disabled'}")
+
+
+
         print("\nCore Smartech SDK integration completed successfully!")
         print(f"Project directory: {project_dir}")
         print(f"Smartech App ID: {app_id}")
@@ -182,6 +196,46 @@ def integrate_smartech(project_dir, app_id):
             print("4. Updating push notification settings...")
             inject_push_meta_tag(manifest_path, ask_permission == 'yes')
             print(f"   ✅ Push notification permission: {'Enabled' if ask_permission == 'yes' else 'Disabled'}")
+
+                    # Ask about notification appearance
+        while True:
+            modify_notification = input("\nDo you want to modify notification appearance? (yes/no): ").strip().lower()
+            if modify_notification in ['yes', 'no']:
+                break
+            print("Error: Please enter 'yes' or 'no'.")
+
+        if modify_notification == 'yes':
+            print("\nPlease provide the resource names for notification customization (press Enter to skip any option):")
+            notification_options = {}
+            
+            brand_logo = input("Brand logo resource name (e.g., logo): ").strip()
+            if brand_logo:
+                notification_options['brand_logo'] = brand_logo
+
+            large_icon = input("Large icon resource name (e.g., icon_notification): ").strip()
+            if large_icon:
+                notification_options['large_icon'] = large_icon
+
+            small_icon = input("Small icon resource name (e.g., ic_action_play): ").strip()
+            if small_icon:
+                notification_options['small_icon'] = small_icon
+
+            small_icon_transparent = input("Transparent small icon resource name (e.g., ic_action_play): ").strip()
+            if small_icon_transparent:
+                notification_options['small_icon_transparent'] = small_icon_transparent
+
+            transparent_bg_color = input("Transparent icon background color (e.g., #FF0000): ").strip()
+            if transparent_bg_color:
+                notification_options['transparent_bg_color'] = transparent_bg_color
+
+            placeholder_icon = input("Placeholder icon resource name (e.g., ic_notification): ").strip()
+            if placeholder_icon:
+                notification_options['placeholder_icon'] = placeholder_icon
+
+            if notification_options:
+                print("10. Setting notification appearance...")
+                inject_notification_appearance(app_class_path, language, notification_options)
+                print("   ✅ Notification appearance configured")
 
             print("\n 🔔 Push SDK integration completed successfully!")
         
