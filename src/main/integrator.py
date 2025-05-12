@@ -1,9 +1,9 @@
 import os
 import sys
-from ..application.application_manager import find_application_class, create_application_class, inject_sdk_initialization, inject_debug_level, inject_notification_appearance
+from ..application.application_manager import find_application_class, create_application_class, inject_sdk_initialization, inject_debug_level, inject_notification_appearance, integrate_product_experience_listeners, register_product_experience_listeners
 from ..deeplink.deeplink_manager import create_deeplink_receiver
-from ..manifest.manifest_manager import modify_manifest, inject_push_meta_tag, register_firebase_service, inject_location_tracking_meta_tag
-from ..gradle.gradle_manager import extract_target_sdk, extract_application_id, modify_gradle, inject_push_dependency, modify_settings_gradle
+from ..manifest.manifest_manager import integrate_product_experience_manifest, modify_manifest, inject_push_meta_tag, register_firebase_service, inject_location_tracking_meta_tag
+from ..gradle.gradle_manager import extract_target_sdk, extract_application_id, integrate_product_experience_dependency, modify_gradle, inject_push_dependency, modify_settings_gradle
 from ..push.push_manager import find_push_service_class, create_push_service_class, inject_push_logic
 from ..backup.backup_manager import create_backup_xml_files
 
