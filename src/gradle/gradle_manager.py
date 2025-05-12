@@ -97,4 +97,18 @@ def inject_push_dependency(gradle_path):
             content = re.sub(r'(dependencies\s*\{)', r'\1\n    ' + push_dependency, content)
     
     with open(gradle_path, 'w') as f:
-        f.write(content) 
+        f.write(content)
+
+def integrate_product_experience_dependency(gradle_path, ui_type):
+    """Inject Product Experience SDK dependency based on UI type."""
+    with open(gradle_path, 'r') as f:
+        content = f.read()
+    is_kts = gradle_path.endswith('.kts')
+    if ui_type == 'compose':
+        dep = 'implementation("com.netcore.android:smartech-nudges-compose:10.5.2")' if is_kts else 'implementation "com.netcore.android:smartech-nudges-compose:10.5.2"'
+    else:
+        dep = 'implementation("com.netcore.android:smartech-nudges:10.2.3")' if is_kts else 'implementation "com.netcore.android:smartech-nudges:10.2.3"'
+    if 'com.netcore.android:smartech-nudges' not in content and 'com.netcore.android:smartech-nudges-compose' not in content:
+        content = re.sub(r'(dependencies\s*\{)', r'\1\n    ' + dep, content)
+        with open(gradle_path, 'w') as f:
+            f.write(content) 

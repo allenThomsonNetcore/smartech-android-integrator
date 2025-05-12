@@ -243,12 +243,43 @@ def integrate_smartech(project_dir, app_id):
                     notification_options['placeholder_icon'] = placeholder_icon
 
                 if notification_options:
-                    print("5. Setting notification appearance...")
+                    print("10. Setting notification appearance...")
                     inject_notification_appearance(app_class_path, language, notification_options)
                     print("   ✅ Notification appearance configured")
 
             print("\n 🔔 Push SDK integration completed successfully!")
-        
+
+        # --- Product Experience SDK Integration ---
+        while True:
+            integrate_product_exp = input("\nDo you want to integrate Product Experience SDK? (yes/no): ").strip().lower()
+            if integrate_product_exp in ['yes', 'no']:
+                break
+            print("Error: Please enter 'yes' or 'no'.")
+
+        if integrate_product_exp == 'yes':
+            hansel_app_id = input("Enter the Hansel APP ID: ").strip()
+            hansel_app_key = input("Enter the Hansel APP Key: ").strip()
+            while True:
+                ui_type = input("Is your app UI Jetpack Compose or Native Views? (compose/native): ").strip().lower()
+                if ui_type in ['compose', 'native']:
+                    break
+                print("Error: Please enter 'compose' or 'native'.")
+
+            print("\nIntegrating Product Experience SDK...")
+            # Dependency injection
+            integrate_product_experience_dependency(gradle_path, ui_type)
+            # Manifest meta-data
+            integrate_product_experience_manifest(manifest_path, hansel_app_id, hansel_app_key)
+            # Listener classes
+            integrate_product_experience_listeners(src_dir, language)
+            # Register listeners in application class
+            register_product_experience_listeners(app_class_path, language)
+            print("   ✅ Product Experience SDK integration completed!")
+
+        print("\nIntegration process completed!")
+        print(f"Project directory: {project_dir}")
+        print(f"Smartech App ID: {app_id}")
+
     except Exception as e:
         print(f"\nError during integration: {str(e)}")
         print("Please check the error message above and try again.")

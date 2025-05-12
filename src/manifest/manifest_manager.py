@@ -109,6 +109,7 @@ def register_firebase_service(manifest_path, service_name):
     with open(manifest_path, 'w') as f:
         f.write(content)
 
+<<<<<<< HEAD
 def inject_location_tracking_meta_tag(manifest_path, enable_location):
     """Inject location tracking meta tag into the manifest."""
     with open(manifest_path, 'r') as f:
@@ -125,5 +126,28 @@ def inject_location_tracking_meta_tag(manifest_path, enable_location):
                              '1' if enable_location else '0'),
                          content)
 
+=======
+def integrate_product_experience_manifest(manifest_path, hansel_app_id, hansel_app_key):
+    """Inject Hansel App ID and App Key as meta-data in the manifest under <application>."""
+    with open(manifest_path, 'r') as f:
+        content = f.read()
+    # Only add if not already present
+    if 'HANSEL_APP_ID' not in content:
+        content = re.sub(r'(<application\b[^>]*>)',
+            r'\1\n        <meta-data android:name="HANSEL_APP_ID" android:value="%s" />' % hansel_app_id,
+            content)
+    else:
+        content = re.sub(r'<meta-data android:name="HANSEL_APP_ID" android:value="[^"]*" ?/>',
+            r'<meta-data android:name="HANSEL_APP_ID" android:value="%s" />' % hansel_app_id,
+            content)
+    if 'HANSEL_APP_KEY' not in content:
+        content = re.sub(r'(<application\b[^>]*>)',
+            r'\1\n        <meta-data android:name="HANSEL_APP_KEY" android:value="%s" />' % hansel_app_key,
+            content)
+    else:
+        content = re.sub(r'<meta-data android:name="HANSEL_APP_KEY" android:value="[^"]*" ?/>',
+            r'<meta-data android:name="HANSEL_APP_KEY" android:value="%s" />' % hansel_app_key,
+            content)
+>>>>>>> product-experience
     with open(manifest_path, 'w') as f:
         f.write(content)
