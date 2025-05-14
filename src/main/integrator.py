@@ -34,6 +34,24 @@ def validate_android_project(project_dir):
     
     return True
 
+def get_path_with_manual_input(auto_path, path_type, description):
+    """Get path with fallback to manual input if auto-detection fails."""
+    if auto_path and os.path.exists(auto_path):
+        return auto_path
+    
+    print(f"\nCould not automatically find {path_type}.")
+    print(f"Please manually provide the path to {description}")
+    
+    while True:
+        manual_path = input(f"Enter {path_type} path: ").strip()
+        if manual_path and os.path.exists(manual_path):
+            return manual_path
+        elif manual_path.lower() == 'skip':
+            return None
+        else:
+            print(f"Path not found: {manual_path}")
+            print("Please try again or type 'skip' to skip this step.")
+
 def get_user_input():
     """Get user input for project path and app ID."""
     while True:
@@ -69,26 +87,61 @@ def integrate_smartech(project_dir, app_id):
         # Define paths
         app_dir = os.path.join(project_dir, "app")
         src_dir = os.path.join(app_dir, "src", "main", "java")
-        manifest_path = os.path.join(app_dir, "src", "main", "AndroidManifest.xml")
         
-        # Check for both gradle file types
+        # Manifest path with manual fallback
+        auto_manifest = os.path.join(app_dir, "src", "main", "AndroidManifest.xml")
+        manifest_path = get_path_with_manual_input(
+            auto_manifest if os.path.exists(auto_manifest) else None,
+            "AndroidManifest.xml",
+            "the AndroidManifest.xml file (usually in app/src/main/)"
+        )
+        
+        if not manifest_path:
+            print("Error: Could not find AndroidManifest.xml file")
+            return False
+        
+        # Check for both gradle file types with manual fallback
         gradle_path = os.path.join(app_dir, "build.gradle")
         gradle_kts_path = os.path.join(app_dir, "build.gradle.kts")
-        if os.path.exists(gradle_kts_path):
-            gradle_path = gradle_kts_path
-
-        # Check for settings.gradle file
-        settings_path = os.path.join(project_dir, "settings.gradle")
-        settings_kts_path = os.path.join(project_dir, "settings.gradle.kts")
-        if os.path.exists(settings_kts_path):
-            settings_path = settings_kts_path
-        elif not os.path.exists(settings_path):
-            print("Error: Could not find settings.gradle or settings.gradle.kts file")
+        auto_gradle = gradle_kts_path if os.path.exists(gradle_kts_path) else gradle_path
+        
+        gradle_path = get_path_with_manual_input(
+            auto_gradle if os.path.exists(auto_gradle) else None,
+            "build.gradle",
+            "the app-level build.gradle or build.gradle.kts file"
+        )
+        
+        if not gradle_path:
+            print("Error: Could not find build.gradle file")
             return False
 
+        # Check for settings.gradle file with manual fallback
+        settings_path = os.path.join(project_dir, "settings.gradle")
+        settings_kts_path = os.path.join(project_dir, "settings.gradle.kts")
+        auto_settings = settings_kts_path if os.path.exists(settings_kts_path) else settings_path
+        
+        settings_path = get_path_with_manual_input(
+            auto_settings if os.path.exists(auto_settings) else None,
+            "settings.gradle",
+            "the project-level settings.gradle or settings.gradle.kts file"
+        )
+        
+        if not settings_path:
+            print("Error: Could not find settings.gradle file")
+            return False
 
-        #finding gradle.properties file
-        properties_path = os.path.join(project_dir, 'gradle.properties') 
+        # Gradle.properties with manual fallback
+        auto_properties = os.path.join(project_dir, 'gradle.properties')
+        properties_path = get_path_with_manual_input(
+            auto_properties if os.path.exists(auto_properties) else None,
+            "gradle.properties",
+            "the gradle.properties file (usually in project root)"
+        )
+        
+        # If gradle.properties doesn't exist, we'll create it
+        if not properties_path:
+            properties_path = auto_properties
+            print(f"Creating gradle.properties at: {properties_path}")
 
         # Add Smartech repository to settings.gradle
         print("1. Adding Smartech repository...")
@@ -105,12 +158,30 @@ def integrate_smartech(project_dir, app_id):
         print(f"   ✅ Target SDK version: {target_sdk}")
         print(f"   🔔 Application ID: {application_id}")
 
-        # Find or create application class
+        # Find or create application class with manual fallback
         print("3. Setting up application class...")
         app_class_path, language = find_application_class(src_dir)
+        
+        # If automatic detection fails, ask for manual input
         if not app_class_path:
-            app_class_path = create_application_class(src_dir, language,application_id)
-            print("   ✅ Created new application class")
+            # Set default language if not detected
+            if not language:
+                language = 'java'  # Default to Java
+            
+            manual_app_path = get_path_with_manual_input(
+                None,
+                "Application class",
+                "your existing Application class file (.java or .kt)"
+            )
+            if manual_app_path:
+                app_class_path = manual_app_path
+                # Determine language from file extension
+                language = 'kotlin' if manual_app_path.endswith('.kt') else 'java'
+                print("   ⚠️ Found existing application class")
+            else:
+                # Create new application class
+                app_class_path = create_application_class(src_dir, language, application_id)
+                print("   ✅ Created new application class")
         else:
             print("   ⚠️ Found existing application class")
         
@@ -129,7 +200,6 @@ def integrate_smartech(project_dir, app_id):
         print("6. Updating Gradle configuration...")
         modify_gradle(gradle_path)
         print("   ✅ Gradle configuration updated")
-
 
         add_core_sdk_version_to_properties(properties_path)
 
@@ -313,4 +383,4 @@ if __name__ == "__main__":
     if integrate_smartech(project_dir, app_id):
         print("\n ✅🧑🏻‍💻Integration completed successfully! ✅🧑🏻‍💻")
     else:
-        print("\n ❌❌❌ Integration failed. Please check the error messages above. ❌❌❌") 
+        print("\n ❌❌❌ Integration failed. Please check the error messages above. ❌❌❌")
