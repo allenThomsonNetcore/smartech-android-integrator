@@ -3,7 +3,7 @@ import sys
 from ..application.application_manager import find_application_class, create_application_class, inject_sdk_initialization, inject_debug_level, inject_notification_appearance, integrate_product_experience_listeners, register_product_experience_listeners
 from ..deeplink.deeplink_manager import create_deeplink_receiver
 from ..manifest.manifest_manager import integrate_product_experience_manifest, modify_manifest, inject_push_meta_tag, register_firebase_service, inject_location_tracking_meta_tag
-from ..gradle.gradle_manager import extract_target_sdk, extract_application_id, integrate_product_experience_dependency, modify_gradle, inject_push_dependency, modify_settings_gradle
+from ..gradle.gradle_manager import add_core_sdk_version_to_properties, add_push_sdk_version_to_properties, extract_target_sdk, extract_application_id, integrate_product_experience_dependency, modify_gradle, inject_push_dependency, modify_settings_gradle
 from ..push.push_manager import find_push_service_class, create_push_service_class, inject_push_logic
 from ..backup.backup_manager import create_backup_xml_files
 
@@ -86,6 +86,10 @@ def integrate_smartech(project_dir, app_id):
             print("Error: Could not find settings.gradle or settings.gradle.kts file")
             return False
 
+
+        #finding gradle.properties file
+        properties_path = os.path.join(project_dir, 'gradle.properties') 
+
         # Add Smartech repository to settings.gradle
         print("1. Adding Smartech repository...")
         modify_settings_gradle(settings_path)
@@ -125,6 +129,9 @@ def integrate_smartech(project_dir, app_id):
         print("6. Updating Gradle configuration...")
         modify_gradle(gradle_path)
         print("   ✅ Gradle configuration updated")
+
+
+        add_core_sdk_version_to_properties(properties_path)
 
         # Create backup configuration files
         print("7. Setting up backup configuration...")
@@ -194,6 +201,8 @@ def integrate_smartech(project_dir, app_id):
             print("3. Adding push dependencies to Gradle...")
             inject_push_dependency(gradle_path)
             print("   🔔 Push dependencies added")
+
+            add_push_sdk_version_to_properties(properties_path)
 
             # Ask about push permission
             while True:

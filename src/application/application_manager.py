@@ -254,20 +254,20 @@ def integrate_product_experience_listeners(src_dir, language,application_id):
     if language == 'kotlin':
         event_listener_code = f'''
 package {application_id}
-import io.hansel.ujmtracker.HanselInternalEventsListener
+
 import com.netcore.android.Smartech
 import java.lang.ref.WeakReference
 
 class HanselInternalEventsListenerImpl(val context: android.content.Context) : HanselInternalEventsListener {{
-    override fun onEvent(eventName: String, dataFromHansel: HashMap<*, *>) {{
-        Smartech.getInstance(WeakReference(context)).trackEvent(eventName, dataFromHansel)
+    override fun onEvent(eventName: String, dataFromHansel: HashMap<String, Any>) {{
+        Smartech.getInstance(WeakReference(applicationContext)).trackEvent(eventName, dataFromHansel)
         // You can also call your Analytics platform trackEvent to pass the data
     }}
 }}
 '''
         deeplink_listener_code = f'''
 package {application_id}
-import io.hansel.ujmtracker.HanselDeepLinkListener
+
 
 class HanselDeepLinkListenerImpl : HanselDeepLinkListener {{
     override fun onLaunchUrl(s: String) {{
@@ -278,7 +278,7 @@ class HanselDeepLinkListenerImpl : HanselDeepLinkListener {{
     else:
         event_listener_code = f'''
 package {application_id}
-import io.hansel.ujmtracker.HanselInternalEventsListener;
+
 import com.netcore.android.Smartech;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -290,14 +290,14 @@ public class HanselInternalEventsListenerImpl implements HanselInternalEventsLis
     }}
     @Override
     public void onEvent(String eventName, HashMap dataFromHansel) {{
-        Smartech.getInstance(new WeakReference<>(context)).trackEvent(eventName, dataFromHansel);
+        Smartech.getInstance(new WeakReference<>(getApplicationContext())).trackEvent(eventName, dataFromHansel);
         // You can also call your Analytics platform trackEvent to pass the data
     }}
 }}
 '''
         deeplink_listener_code = f'''
 package {application_id}
-import io.hansel.ujmtracker.HanselDeepLinkListener;
+
 
 public class HanselDeepLinkListenerImpl implements HanselDeepLinkListener {{
     @Override

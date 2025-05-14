@@ -112,3 +112,53 @@ def integrate_product_experience_dependency(gradle_path, ui_type):
         content = re.sub(r'(dependencies\s*\{)', r'\1\n    ' + dep, content)
         with open(gradle_path, 'w') as f:
             f.write(content) 
+
+
+def add_core_sdk_version_to_properties(properties_path):
+    """Add or update Smartech Core SDK version in gradle.properties file."""
+    version_key = 'SMARTECH_BASE_SDK_VERSION'
+    version_value = '3.5.8'
+    
+    # Read existing properties if file exists
+    content = ""
+    if os.path.exists(properties_path):
+        with open(properties_path, 'r') as f:
+            content = f.read()
+    
+    # Check if version already exists and update it
+    if version_key in content:
+        # Update existing version
+        pattern = f'^{version_key}=.*$'
+        content = re.sub(pattern, f'{version_key}={version_value}', content, flags=re.MULTILINE)
+    else:
+        # Add new version
+        content += f"\n{version_key}={version_value}"
+    
+    # Write back to file
+    with open(properties_path, 'w') as f:
+        f.write(content.strip() + "\n")
+
+def add_push_sdk_version_to_properties(properties_path):
+    """Add or update Smartech Push SDK version in gradle.properties file."""
+    version_key = 'SMARTECH_PUSH_SDK_VERSION'
+    version_value = '3.5.4'
+    
+    # Read existing properties if file exists
+    content = ""
+    if os.path.exists(properties_path):
+        with open(properties_path, 'r') as f:
+            content = f.read()
+    
+    # Check if version already exists and update it
+    if version_key in content:
+        # Update existing version
+        pattern = f'^{version_key}=.*$'
+        content = re.sub(pattern, f'{version_key}={version_value}', content, flags=re.MULTILINE)
+    else:
+        # Add new version
+        content += f"\n{version_key}={version_value}"
+    
+    # Write back to file
+    with open(properties_path, 'w') as f:
+        f.write(content.strip() + "\n")
+                  
