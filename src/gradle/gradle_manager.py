@@ -40,7 +40,7 @@ def modify_gradle(gradle_path):
     is_kts = gradle_path.endswith('.kts')
     
     # Add core dependency if not present
-    core_dependency = 'implementation("com.netcore.android:smartech-sdk:3.6.2")' if is_kts else 'implementation "com.netcore.android:smartech-sdk:3.6.2"'
+    core_dependency = 'implementation("com.netcore.android:smartech-sdk:3.6.2")' if is_kts else 'implementation "com.netcore.android:smartech-sdk:${SMARTECH_BASE_SDK_VERSION}"'
     if 'com.netcore.android:smartech-base' not in content:
         # Find the dependencies block
         if is_kts:
@@ -88,7 +88,7 @@ def inject_push_dependency(gradle_path):
     is_kts = gradle_path.endswith('.kts')
     
     # Add push dependency if not present
-    push_dependency = 'implementation("com.netcore.android:smartech-push:3.5.6")' if is_kts else 'implementation "com.netcore.android:smartech-push:3.5.6"'
+    push_dependency = 'implementation("com.netcore.android:smartech-push:3.5.6")' if is_kts else 'implementation "com.netcore.android:smartech-push:${SMARTECH_BASE_SDK_VERSION}"'
     if 'com.netcore.android:smartech-push' not in content:
         # Find the dependencies block
         if is_kts:
@@ -114,8 +114,11 @@ def integrate_product_experience_dependency(gradle_path, ui_type):
             f.write(content) 
 
 
-def add_core_sdk_version_to_properties(properties_path):
+def add_core_sdk_version_to_properties(properties_path,gradle_path):
     """Add or update Smartech Core SDK version in gradle.properties file."""
+    is_kts = gradle_path.endswith('.kts')
+    if is_kts:
+        return
     version_key = 'SMARTECH_BASE_SDK_VERSION'
     version_value = '3.5.8'
     
@@ -138,8 +141,11 @@ def add_core_sdk_version_to_properties(properties_path):
     with open(properties_path, 'w') as f:
         f.write(content.strip() + "\n")
 
-def add_push_sdk_version_to_properties(properties_path):
+def add_push_sdk_version_to_properties(properties_path,gradle_path):
     """Add or update Smartech Push SDK version in gradle.properties file."""
+    is_kts = gradle_path.endswith('.kts')
+    if is_kts:
+        return
     version_key = 'SMARTECH_PUSH_SDK_VERSION'
     version_value = '3.5.4'
     

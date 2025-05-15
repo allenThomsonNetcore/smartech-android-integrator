@@ -151,3 +151,38 @@ def integrate_product_experience_manifest(manifest_path, hansel_app_id, hansel_a
             content)
     with open(manifest_path, 'w') as f:
         f.write(content)
+
+def add_hansel_test_device_intent_filter(manifest_path, scheme):
+    """Add intent filter for Hansel test device pairing to the launcher activity."""
+    with open(manifest_path, 'r') as f:
+        content = f.read()
+    
+    # Check if an intent filter with this scheme already exists anywhere in the manifest
+    if f'<data android:scheme="{scheme}"' in content:
+        print(f"   ℹ️ Intent filter for scheme '{scheme}' already exists in manifest")
+        return  # Intent filter already exists
+    
+    # Look for the launcher activity
+    launcher_activity_pattern = r'(<activity\s+[^>]*android:name="[^"]*"[^>]*>(?:.*?)<intent-filter>(?:.*?)<action\s+android:name="android.intent.action.MAIN"(?:.*?)<category\s+android:name="android.intent.category.LAUNCHER"(?:.*?)</intent-filter>)'
+    match = re.search(launcher_activity_pattern, content, re.DOTALL)
+    
+    if match:
+        activity_block = match.group(1)
+        
+        # Prepare the intent filter
+        intent_filter = f"""
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="{scheme}" />
+        </intent-filter>"""
+        
+        # Add the intent filter after the existing launcher intent filter
+        modified_activity_block = activity_block + intent_filter
+        content = content.replace(activity_block, modified_activity_block)
+        
+        with open(manifest_path, 'w') as f:
+            f.write(content)
+    else:
+        print("   ⚠️ Could not find launcher activity in manifest to add Hansel test device intent filter")

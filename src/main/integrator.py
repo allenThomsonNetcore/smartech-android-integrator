@@ -1,8 +1,8 @@
 import os
 import sys
 from ..application.application_manager import find_application_class, create_application_class, inject_sdk_initialization, inject_debug_level, inject_notification_appearance, integrate_product_experience_listeners, register_product_experience_listeners
-from ..deeplink.deeplink_manager import create_deeplink_receiver
-from ..manifest.manifest_manager import integrate_product_experience_manifest, modify_manifest, inject_push_meta_tag, register_firebase_service, inject_location_tracking_meta_tag
+from ..deeplink.deeplink_manager import add_scheme_intent_filter_to_manifest, create_deeplink_receiver, inject_deeplink_handling_code
+from ..manifest.manifest_manager import integrate_product_experience_manifest, modify_manifest, inject_push_meta_tag, register_firebase_service, inject_location_tracking_meta_tag, add_hansel_test_device_intent_filter
 from ..gradle.gradle_manager import add_core_sdk_version_to_properties, add_push_sdk_version_to_properties, extract_target_sdk, extract_application_id, integrate_product_experience_dependency, modify_gradle, inject_push_dependency, modify_settings_gradle
 from ..push.push_manager import find_push_service_class, create_push_service_class, inject_push_logic
 from ..backup.backup_manager import create_backup_xml_files
@@ -51,6 +51,79 @@ def get_path_with_manual_input(auto_path, path_type, description):
         else:
             print(f"Path not found: {manual_path}")
             print("Please try again or type 'skip' to skip this step.")
+
+
+def find_main_activity(src_dir, manifest_path):
+    """Find the main activity in the source directory based on manifest launcher activity."""
+    import re
+    import os
+    
+    # First, parse the AndroidManifest.xml to find the launcher activity
+    with open(manifest_path, 'r') as f:
+        manifest_content = f.read()
+    
+    # Look for the launcher activity
+    launcher_activity_pattern = r'<activity\s+[^>]*android:name="([^"]*)"[^>]*>(?:.*?)<intent-filter>(?:.*?)<action\s+android:name="android.intent.action.MAIN"(?:.*?)<category\s+android:name="android.intent.category.LAUNCHER"(?:.*?)</intent-filter>'
+    match = re.search(launcher_activity_pattern, manifest_content, re.DOTALL)
+    
+    if match:
+        activity_name = match.group(1)
+        
+        # Handle both package-specific and relative activity names
+        if activity_name.startswith('.'):
+            # Get the package name from the manifest
+            pkg_match = re.search(r'package="([^"]*)"', manifest_content)
+            if pkg_match:
+                package_name = pkg_match.group(1)
+                activity_name = package_name + activity_name
+            else:
+                return None
+        
+        # Convert package.name.ActivityName to package/name/ActivityName.java or .kt
+        activity_path = activity_name.replace('.', os.sep)
+        
+        # Check for Java or Kotlin file
+        java_file = os.path.join(src_dir, activity_path + ".java")
+        kt_file = os.path.join(src_dir, activity_path + ".kt")
+        
+        if os.path.exists(java_file):
+            return java_file
+        elif os.path.exists(kt_file):
+            return kt_file
+        
+        # If not found, try to search for the activity name in the src directory
+        activity_class_name = activity_name.split('.')[-1]
+        for root, _, files in os.walk(src_dir):
+            for file in files:
+                if file == activity_class_name + ".java" or file == activity_class_name + ".kt":
+                    return os.path.join(root, file)
+    
+    # If we couldn't find it automatically, ask the user
+    print("   ⚠️ Could not automatically find the main activity.")
+    manual_path = input("Please enter the path to your main activity file (or press Enter to skip): ").strip()
+    
+    if manual_path and os.path.exists(manual_path):
+        return manual_path
+    
+    return None
+
+def get_path_with_manual_input(auto_path, path_type, description):
+    """Get path with fallback to manual input if auto-detection fails."""
+    if auto_path and os.path.exists(auto_path):
+        return auto_path
+    
+    print(f"\nCould not automatically find {path_type}.")
+    print(f"Please manually provide the path to {description}")
+    
+    while True:
+        manual_path = input(f"Enter {path_type} path: ").strip()
+        if manual_path and os.path.exists(manual_path):
+            return manual_path
+        elif manual_path.lower() == 'skip':
+            return None
+        else:
+            print(f"Path not found: {manual_path}")
+            print("Please try again or type 'skip' to skip this step.")            
 
 def get_user_input():
     """Get user input for project path and app ID."""
@@ -143,6 +216,12 @@ def integrate_smartech(project_dir, app_id):
             properties_path = auto_properties
             print(f"Creating gradle.properties at: {properties_path}")
 
+
+        # Ask for the URI scheme for deep linking
+        scheme = input("\nEnter the URI scheme for Adding test device (e.g., myapp): ").strip()
+        if not scheme:
+            print("Warning: Empty scheme provided. Skipping scheme-based deep linking setup.")      
+
         # Add Smartech repository to settings.gradle
         print("1. Adding Smartech repository...")
         modify_settings_gradle(settings_path)
@@ -190,6 +269,25 @@ def integrate_smartech(project_dir, app_id):
         create_deeplink_receiver(src_dir, language,application_id)
         print("   ✅ Deep link receiver configured")
 
+
+          # Set up scheme-based deep linking
+        if scheme:
+            print("5. Setting up scheme-based deep linking...")
+            # Locate the main activity or ask for its path
+            activity_path = find_main_activity(src_dir, manifest_path)
+            if activity_path:
+                activity_language = 'kotlin' if activity_path.endswith('.kt') else 'java'
+                print(f"   🔍 Found main activity at: {activity_path}")
+                # Add intent filter to manifest for the scheme
+                add_scheme_intent_filter_to_manifest(manifest_path, scheme)
+                print("   ✅ Added scheme intent filter to manifest")
+                # Inject deep link handling code in the activity
+                inject_deeplink_handling_code(activity_path, activity_language)
+                print("   ✅ Injected deep link handling code in activity")
+            else:
+                print("   ⚠️ Could not find main activity. Skipping scheme-based deep linking setup.")
+
+
         # Modify manifest
         print("5. Updating Android manifest...")
         app_class_relative = os.path.relpath(app_class_path, src_dir).replace(os.sep, '.').replace('.java', '').replace('.kt', '')
@@ -201,7 +299,7 @@ def integrate_smartech(project_dir, app_id):
         modify_gradle(gradle_path)
         print("   ✅ Gradle configuration updated")
 
-        add_core_sdk_version_to_properties(properties_path)
+        add_core_sdk_version_to_properties(properties_path,gradle_path)
 
         # Create backup configuration files
         print("7. Setting up backup configuration...")
@@ -272,7 +370,7 @@ def integrate_smartech(project_dir, app_id):
             inject_push_dependency(gradle_path)
             print("   🔔 Push dependencies added")
 
-            add_push_sdk_version_to_properties(properties_path)
+            add_push_sdk_version_to_properties(properties_path,gradle_path)
 
             # Ask about push permission
             while True:
@@ -338,6 +436,12 @@ def integrate_smartech(project_dir, app_id):
         if integrate_product_exp == 'yes':
             hansel_app_id = input("Enter the Hansel APP ID: ").strip()
             hansel_app_key = input("Enter the Hansel APP Key: ").strip()
+            
+            # Ask for the URI scheme for Hansel test device pairing
+            hansel_scheme = input("\nEnter the URI scheme for Hansel test device pairing (e.g., myapp): ").strip()
+            if not hansel_scheme:
+                print("Warning: Empty scheme provided. Skipping Hansel test device pairing setup.")
+                
             while True:
                 ui_type = input("Is your app UI Jetpack Compose or Native Views? (compose/native): ").strip().lower()
                 if ui_type in ['compose', 'native']:
@@ -349,6 +453,60 @@ def integrate_smartech(project_dir, app_id):
             integrate_product_experience_dependency(gradle_path, ui_type)
             # Manifest meta-data
             integrate_product_experience_manifest(manifest_path, hansel_app_id, hansel_app_key)
+            
+            # Add intent filter for Hansel test device pairing if scheme is provided
+            if hansel_scheme:
+                print("   🔔 Setting up Hansel test device pairing...")
+                
+                # Find main activity
+                main_activity_path = find_main_activity(src_dir, manifest_path)
+                if main_activity_path:
+                    # Determine language from file extension
+                    activity_language = 'kotlin' if main_activity_path.endswith('.kt') else 'java'
+                    
+                    # Read activity file content
+                    with open(main_activity_path, 'r') as f:
+                        activity_content = f.read()
+                    
+                    # Check if Hansel.pairTestDevice is already present in the file
+                    if "Hansel.pairTestDevice" in activity_content:
+                        print("   ℹ️ Hansel test device pairing code already exists in activity")
+                    else:
+                        # Add Hansel test device pairing code
+                        import re
+                        if activity_language == 'kotlin':
+                            onCreate_pattern = r'override\s+fun\s+onCreate\s*\([^)]*\)\s*\{[^}]*\}'
+                            match = re.search(onCreate_pattern, activity_content, re.DOTALL)
+                            if match:
+                                # Get the end position of onCreate method
+                                onCreate_end = match.end()
+                                # Insert the pairing code after onCreate
+                                new_content = activity_content[:onCreate_end] + "\n\n    // Hansel test device pairing\n    Hansel.pairTestDevice(intent.dataString)\n" + activity_content[onCreate_end:]
+                                
+                                # Write the modified content back to the file
+                                with open(main_activity_path, 'w') as f:
+                                    f.write(new_content)
+                                print("   ✅ Added Hansel test device pairing code (Kotlin)")
+                        else:  # Java
+                            onCreate_pattern = r'(protected|public)\s+void\s+onCreate\s*\([^)]*\)\s*\{[^}]*\}'
+                            match = re.search(onCreate_pattern, activity_content, re.DOTALL)
+                            if match:
+                                # Get the end position of onCreate method
+                                onCreate_end = match.end()
+                                # Insert the pairing code after onCreate
+                                new_content = activity_content[:onCreate_end] + "\n\n        // Hansel test device pairing\n        Hansel.pairTestDevice(getIntent().getDataString());\n" + activity_content[onCreate_end:]
+                                
+                                # Write the modified content back to the file
+                                with open(main_activity_path, 'w') as f:
+                                    f.write(new_content)
+                                print("   ✅ Added Hansel test device pairing code (Java)")
+                    
+                    # Add intent filter to manifest
+                    add_hansel_test_device_intent_filter(manifest_path, hansel_scheme)
+                    print("   ✅ Added Hansel test device deeplink to manifest")
+                else:
+                    print("   ⚠️ Could not find main activity for Hansel test device pairing")
+            
             # Listener classes
             integrate_product_experience_listeners(src_dir, language,application_id)
             # Register listeners in application class
@@ -372,10 +530,15 @@ if __name__ == "__main__":
     print("\nPlease provide the following information:")
     
     print("🔧 Smartech SDK Integration for Android Native")
-    framework = input("Enter framework (android, flutter, react-native): ").strip().lower()
-    if framework != "android":
-        print("❌ Only Android Native is supported right now.")
-        sys.exit(1)
+
+    while True:
+        framework = input("Enter framework (android, flutter, react-native): ").strip().lower()
+        if framework in ["android"]:
+            
+            break
+        print("🔧 Only Native Android is supported right now.")
+  
+  
 
     project_dir, app_id = get_user_input()
     
