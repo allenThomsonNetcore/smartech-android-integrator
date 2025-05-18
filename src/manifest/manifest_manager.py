@@ -10,6 +10,11 @@ def modify_manifest(manifest_path, app_id, app_class_relative, target_sdk):
         content = re.sub(r'(<application\b[^>]*>)',
                          r'\1\n        <meta-data android:name="SMT_APP_ID" android:value="{}" />'.format(app_id),
                          content)
+    else:
+        # Update existing SMT_APP_ID value
+        content = re.sub(r'<meta-data android:name="SMT_APP_ID" android:value="[^"]*" ?/>',
+                         r'<meta-data android:name="SMT_APP_ID" android:value="{}" />'.format(app_id),
+                         content)
 
     # Always set android:name to the application class path
     if re.search(r'<application[^>]*android:name=', content):
