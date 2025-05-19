@@ -91,7 +91,7 @@ def inject_sdk_initialization(app_class_path, language, target_sdk):
 """
 
         if insertion.strip():
-            content = re.sub(r'(override fun onCreate\(\) \s*{[^}]*super\.onCreate\(\);?)',
+            content = re.sub(r'(override fun onCreate\([^)]*\) \s*{[^}]*super\.onCreate\([^)]*\);?)',
                              lambda m: m.group(0) + insertion,
                              content)
 
@@ -123,7 +123,7 @@ def inject_sdk_initialization(app_class_path, language, target_sdk):
 """
 
         if insertion.strip():
-            content = re.sub(r'(public void onCreate\(\) \s*{[^}]*super\.onCreate\(\);?)',
+            content = re.sub(r'(public void onCreate\([^)]*\) \s*{[^}]*super\.onCreate\([^)]*\);?)',
                              lambda m: m.group(0) + insertion,
                              content)
 
