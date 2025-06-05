@@ -69,7 +69,7 @@ def inject_push_logic(push_class_path, language):
 }""",
                              content)
         elif 'onNewToken' in content and 'setPushToken' not in content:
-            content = re.sub(r'(@Override\s+public\s+void\s+onNewToken\s*\(\s*@NonNull\s*String\s+token\s*\)\s*{[^}]*})',
+            content = re.sub(r'((?:@Override\s+)?public\s+void\s+onNewToken\s*\(\s*(?:@NonNull\s+)?String\s+token\s*\)\s*{[^}]*})',
                              lambda m: m.group(0).replace('}', """
         Smartech.getInstance(new WeakReference<>(getApplicationContext())).setPushToken(token);
     }"""),
@@ -89,7 +89,7 @@ def inject_push_logic(push_class_path, language):
 }""",
                              content)
         elif 'onMessageReceived' in content and 'handlePushNotification' not in content:
-            content = re.sub(r'(@Override\s+public\s+void\s+onMessageReceived\s*\(\s*RemoteMessage\s+remoteMessage\s*\)\s*{[^}]*super\.onMessageReceived\s*\(\s*remoteMessage\s*\)[^}]*})',
+            content = re.sub(r'(@Override\s+public\s+void\s+onMessageReceived\s*\(\s*(?:@NonNull\s+)?RemoteMessage\s+remoteMessage\s*\)\s*{[^}]*super\.onMessageReceived\s*\(\s*remoteMessage\s*\)[^}]*})',
                              lambda m: m.group(0).replace('}', """
         if(remoteMessage.getData().containsKey("smtSrc")){
             Smartech.getInstance(new WeakReference<>(getApplicationContext())).handlePushNotification(remoteMessage);

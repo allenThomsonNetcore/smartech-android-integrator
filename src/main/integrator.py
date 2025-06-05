@@ -488,7 +488,7 @@ def integrate_smartech(project_dir, app_id):
                                     f.write(new_content)
                                 print("   ✅ Added Hansel test device pairing code (Kotlin)")
                         else:  # Java
-                            onCreate_pattern = r'(protected|public)\s+void\s+onCreate\s*\([^)]*\)\s*\{[^}]*\}'
+                            onCreate_pattern = r'(protected|public)\s+void\s+onCreate\s*\(\s*(?:Bundle|android\.os\.Bundle)\s+savedInstanceState\s*\)\s*\{[^}]*\}'
                             match = re.search(onCreate_pattern, activity_content, re.DOTALL)
                             if match:
                                 # Get the end position of onCreate method

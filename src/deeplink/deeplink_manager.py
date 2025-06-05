@@ -155,7 +155,7 @@ def inject_deeplink_handling_code(activity_path, language):
     code_to_inject = kotlin_code if language == 'kotlin' else java_code
     
     # For onCreate method in Java
-    java_pattern = r'(public\s+void\s+onCreate\s*\([^)]*\)\s*\{[^}]*super\.onCreate\s*\([^)]*\);)'
+    java_pattern = r'((?:public|protected)\s+void\s+onCreate\s*\(\s*(?:Bundle|android\.os\.Bundle)\s+\w+\s*\)\s*\{[^}]*super\.onCreate\s*\([^)]*\);)'
     
     # For onCreate method in Kotlin
     kotlin_pattern = r'(override\s+fun\s+onCreate\s*\([^)]*\)\s*\{[^}]*super\.onCreate\s*\([^)]*\))'
