@@ -123,7 +123,7 @@ def inject_sdk_initialization(app_class_path, language, target_sdk):
 """
 
         if insertion.strip():
-            content = re.sub(r'(public void onCreate\([^)]*\) \s*{[^}]*super\.onCreate\([^)]*\);?)',
+            content = re.sub(r'((?:public|protected)\s+void\s+onCreate\s*\(\s*(?:Bundle|android\.os\.Bundle)\s+\w+\s*\)\s*\{[^}]*super\.onCreate\s*\([^)]*\);?)',
                              lambda m: m.group(0) + insertion,
                              content)
 
@@ -241,6 +241,11 @@ def inject_notification_appearance(app_class_path, language, notification_option
             content = re.sub(r'(Smartech\.getInstance\(new\s+WeakReference<>\(this\)\)\.initializeSdk\(this\);)',
                             r'\1\n        ' + options_code,
                             content)
+            # Also try to add after trackAppInstallUpdateBySmartech if initialization pattern not found
+            if 'setNotificationOptions' not in content:
+                content = re.sub(r'(Smartech\.getInstance\(new\s+WeakReference<>\(this\)\)\.trackAppInstallUpdateBySmartech\(\);)',
+                                r'\1\n        ' + options_code,
+                                content)
 
     with open(app_class_path, 'w') as f:
         f.write(content)

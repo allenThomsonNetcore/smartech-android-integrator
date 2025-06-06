@@ -168,7 +168,7 @@ def add_hansel_test_device_intent_filter(manifest_path, scheme):
         return  # Intent filter already exists
     
     # Look for the launcher activity
-    launcher_activity_pattern = r'(<activity\s+[^>]*android:name="[^"]*"[^>]*>(?:.*?)<intent-filter>(?:.*?)<action\s+android:name="android.intent.action.MAIN"(?:.*?)<category\s+android:name="android.intent.category.LAUNCHER"(?:.*?)</intent-filter>)'
+    launcher_activity_pattern = r'(<activity\s+[^>]*?android:name="[^"]*"[^>]*?>(?:.*?)<intent-filter>(?:.*?)<action\s+android:name="android\.intent\.action\.MAIN"\s*\/?>(?:.*?)<category\s+android:name="android\.intent\.category\.LAUNCHER"\s*\/?>(?:.*?)<\/intent-filter>)'
     match = re.search(launcher_activity_pattern, content, re.DOTALL)
     
     if match:

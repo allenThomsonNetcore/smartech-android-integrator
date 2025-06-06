@@ -80,7 +80,7 @@ def add_scheme_intent_filter_to_manifest(manifest_path, scheme):
         content = f.read()
     
     # Look for the launcher activity
-    launcher_activity_pattern = r'(<activity\s+[^>]*android:name="[^"]*"[^>]*>(?:.*?)<intent-filter>(?:.*?)<action\s+android:name="android.intent.action.MAIN"(?:.*?)<category\s+android:name="android.intent.category.LAUNCHER"(?:.*?)</intent-filter>)'
+    launcher_activity_pattern = r'(<activity\s+[^>]*?android:name="[^"]*"[^>]*?>(?:.*?)<intent-filter>(?:.*?)<action\s+android:name="android\.intent\.action\.MAIN"\s*\/?>(?:.*?)<category\s+android:name="android\.intent\.category\.LAUNCHER"\s*\/?>(?:.*?)<\/intent-filter>)'
     
     # Check if an intent filter with smartech_sdk_td host already exists
     smartech_host_pattern = r'<data[^>]*android:host="smartech_sdk_td"[^>]*>'

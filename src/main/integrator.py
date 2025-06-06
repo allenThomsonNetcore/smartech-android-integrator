@@ -63,7 +63,7 @@ def find_main_activity(src_dir, manifest_path):
         manifest_content = f.read()
     
     # Look for the launcher activity
-    launcher_activity_pattern = r'<activity\s+[^>]*android:name="([^"]*)"[^>]*>(?:.*?)<intent-filter>(?:.*?)<action\s+android:name="android.intent.action.MAIN"(?:.*?)<category\s+android:name="android.intent.category.LAUNCHER"(?:.*?)</intent-filter>'
+    launcher_activity_pattern = r'(<activity\s+[^>]*?android:name="([^"]*)"[^>]*?>(?:.*?)<intent-filter>(?:.*?)<action\s+android:name="android\.intent\.action\.MAIN"\s*\/?>(?:.*?)<category\s+android:name="android\.intent\.category\.LAUNCHER"\s*\/?>(?:.*?)<\/intent-filter>)'
     match = re.search(launcher_activity_pattern, manifest_content, re.DOTALL)
     
     if match:
@@ -275,6 +275,7 @@ def integrate_smartech(project_dir, app_id):
             print("5. Setting up scheme-based deep linking...")
             # Locate the main activity or ask for its path
             activity_path = find_main_activity(src_dir, manifest_path)
+            print(f"   🔍 Found main activity at: {activity_path}")
             if activity_path:
                 activity_language = 'kotlin' if activity_path.endswith('.kt') else 'java'
                 print(f"   🔍 Found main activity at: {activity_path}")
