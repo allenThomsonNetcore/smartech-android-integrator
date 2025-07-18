@@ -1,4 +1,6 @@
 import os
+import re
+
 from src.flutter.pubspec import add_flutter_pubspec_dependency
 from src.flutter.application import setup_flutter_application_class, inject_flutter_debug_level
 from src.flutter.manifest import update_flutter_manifest, inject_flutter_location_tracking
@@ -7,7 +9,7 @@ from src.flutter.deeplink import inject_flutter_deeplink_handler, add_flutter_sc
 from src.flutter.backup import create_flutter_backup_xml_files
 
 def get_flutter_paths(project_dir):
-    """Return a dict of relevant paths (manifest, gradle, gradle.kts, properties, pubspec, etc.) and their existence."""
+    """Return a dict of relevant paths (manifest, gradle, gradle.kts, properties, pubspec, etc.) and their existence, including both java and kotlin roots."""
     android_dir = os.path.join(project_dir, "android")
     app_dir = os.path.join(android_dir, "app")
     paths = {
@@ -16,7 +18,8 @@ def get_flutter_paths(project_dir):
         'gradle_kts': os.path.join(app_dir, "build.gradle.kts"),
         'properties': os.path.join(android_dir, "gradle.properties"),
         'pubspec': os.path.join(project_dir, "pubspec.yaml"),
-        'src_dir': os.path.join(app_dir, "src", "main", "java"),
+        'src_java': os.path.join(app_dir, "src", "main", "java"),
+        'src_kotlin': os.path.join(app_dir, "src", "main", "kotlin"),
         'main_dart': os.path.join(project_dir, "lib", "main.dart"),
     }
     exists_flags = {k + '_exists': os.path.exists(v) for k, v in paths.items()}
@@ -65,14 +68,37 @@ def integrate_smartech_flutter():
     else:
         print("   ⚠️ No settings.gradle or settings.gradle.kts found. Skipping Smartech repository addition.")
     print("\nStep 3: Setting up Application class...")
-    app_class_path, language = setup_flutter_application_class(paths['src_dir'], application_id=None)  # application_id will be extracted below
+    # Search for Application class that extends FlutterApplication in both java and kotlin roots
+    app_class_path = None
+    language = None
+    for src_root in [paths['src_java'], paths['src_kotlin']]:
+        if os.path.exists(src_root):
+            for root, _, files in os.walk(src_root):
+                for file in files:
+                    if file.endswith(".kt") or file.endswith(".java"):
+                        file_path = os.path.join(root, file)
+                        with open(file_path, 'r') as f:
+                            content = f.read()
+                            if (file.endswith('.kt') and re.search(r'class\s+\w+\s*:\s*FlutterApplication\s*\(', content)) or \
+                               (file.endswith('.java') and re.search(r'class\s+\w+\s+extends\s+FlutterApplication', content)):
+                                app_class_path = file_path
+                                language = 'kotlin' if file.endswith('.kt') else 'java'
+                                break
+                if app_class_path:
+                    break
+        if app_class_path:
+            break
+    if not app_class_path:
+        # If not found, create in kotlin root by default
+        src_dir = paths['src_kotlin'] if os.path.exists(paths['src_kotlin']) else paths['src_java']
+        app_class_path, language = setup_flutter_application_class(src_dir, application_id=None)
+    print(f"   ✅ Using Application class at {app_class_path}")
     print("\nStep 4: Updating gradle and gradle.properties...")
     gradle_path = paths['gradle_kts'] if paths['gradle_kts_exists'] else paths['gradle']
     update_flutter_gradle(gradle_path, paths['properties'])
     print("\nStep 5: Prompting for Smartech App ID...")
     smartech_app_id = input("Enter your Smartech App ID: ").strip()
     print("\nStep 6: Extracting applicationId and targetSdk from gradle...")
-    import re
     application_id = None
     target_sdk = 33
     with open(gradle_path, 'r') as f:
@@ -88,7 +114,7 @@ def integrate_smartech_flutter():
     print("\nStep 7: Creating backup XML files...")
     create_flutter_backup_xml_files(project_dir, target_sdk)
     print("\nStep 8: Updating manifest with Smartech App ID, application class, and backup registration...")
-    app_class_relative = os.path.relpath(app_class_path, paths['src_dir']).replace(os.sep, ".").replace(".java", "").replace(".kt", "")
+    app_class_relative = os.path.relpath(app_class_path, paths['src_kotlin'] if app_class_path and app_class_path.startswith(paths['src_kotlin']) else paths['src_java']).replace(os.sep, ".").replace(".java", "").replace(".kt", "")
     update_flutter_manifest(paths['manifest'], smartech_app_id, app_class_relative, target_sdk)
     print("\nStep 9: Injecting debug log level...")
     while True:
@@ -110,40 +136,33 @@ def integrate_smartech_flutter():
     scheme = input("\nEnter the URI scheme for Adding test device (e.g., myapp): ").strip()
     if scheme:
         print("Step 13: Setting up scheme-based deep linking for test device...")
-        # Add intent filter to launcher activity in manifest and get its android:name
         activity_name = add_flutter_scheme_intent_filter_to_manifest(paths['manifest'], scheme)
         main_activity_path = None
         if activity_name:
-            # Convert android:name to file path
-            # If fully qualified, use as is; if relative (starts with .), prepend application_id
-            if activity_name.startswith('.'):
-                # Prepend application_id
-                java_path = os.path.join(paths['src_dir'], *(application_id.split('.')), activity_name[1:] + ".java")
-                kt_path = os.path.join(paths['src_dir'], *(application_id.split('.')), activity_name[1:] + ".kt")
-            elif '.' in activity_name:
-                # Fully qualified
-                java_path = os.path.join(paths['src_dir'], *(activity_name.split('.'))) + ".java"
-                kt_path = os.path.join(paths['src_dir'], *(activity_name.split('.'))) + ".kt"
-            else:
-                # Just the class name
-                java_path = os.path.join(paths['src_dir'], activity_name + ".java")
-                kt_path = os.path.join(paths['src_dir'], activity_name + ".kt")
-            if os.path.exists(java_path):
-                main_activity_path = java_path
-                activity_language = 'java'
-            elif os.path.exists(kt_path):
-                main_activity_path = kt_path
-                activity_language = 'kotlin'
-            else:
-                # Fallback: search for file in src_dir
-                for root, _, files in os.walk(paths['src_dir']):
-                    for file in files:
-                        if file == os.path.basename(java_path) or file == os.path.basename(kt_path):
-                            main_activity_path = os.path.join(root, file)
-                            activity_language = 'kotlin' if file.endswith('.kt') else 'java'
-                            break
-                    if main_activity_path:
-                        break
+            # Convert android:name to file path, search both java and kotlin roots
+            def find_activity_file(activity_name, src_roots):
+                if activity_name.startswith('.'):
+                    # Prepend application_id
+                    rel_path = os.path.join(*(application_id.split('.')), activity_name[1:])
+                elif '.' in activity_name:
+                    rel_path = os.path.join(*(activity_name.split('.')))
+                else:
+                    rel_path = activity_name
+                for src_root in src_roots:
+                    java_path = os.path.join(src_root, rel_path + ".java")
+                    kt_path = os.path.join(src_root, rel_path + ".kt")
+                    if os.path.exists(java_path):
+                        return java_path, 'java'
+                    if os.path.exists(kt_path):
+                        return kt_path, 'kotlin'
+                # Fallback: search for file in both roots
+                for src_root in src_roots:
+                    for root, _, files in os.walk(src_root):
+                        for file in files:
+                            if file == os.path.basename(rel_path + ".java") or file == os.path.basename(rel_path + ".kt"):
+                                return os.path.join(root, file), ('kotlin' if file.endswith('.kt') else 'java')
+                return None, None
+            main_activity_path, activity_language = find_activity_file(activity_name, [paths['src_java'], paths['src_kotlin']])
             if main_activity_path:
                 inject_flutter_deeplink_handling_code(main_activity_path, activity_language)
                 print(f"   ✅ Injected deep link handling code in {main_activity_path}")
