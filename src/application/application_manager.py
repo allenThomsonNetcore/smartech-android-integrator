@@ -1,23 +1,65 @@
 import os
 import re
 
-def find_application_class(src_dir):
-    """Find the application class in the source directory."""
+def find_application_class(src_dir, flutter_mode=False):
+    """Find the application class in the source directory. If flutter_mode, look for FlutterApplication."""
+    import re
     for root, _, files in os.walk(src_dir):
         for file in files:
             if file.endswith(".java") or file.endswith(".kt"):
                 path = os.path.join(root, file)
                 with open(path, 'r') as f:
                     content = f.read()
-                    if re.search(r'class\s+\w+\s*:\s*Application|extends\s+Application', content):
-                        return path, 'kotlin' if file.endswith('.kt') else 'java'
+                    if flutter_mode:
+                        if re.search(r'class\s+\w+\s*:\s*FlutterApplication|extends\s+FlutterApplication', content):
+                            return path, 'kotlin' if file.endswith('.kt') else 'java'
+                    else:
+                        if re.search(r'class\s+\w+\s*:\s*Application|extends\s+Application', content):
+                            return path, 'kotlin' if file.endswith('.kt') else 'java'
     return None, None
 
-def create_application_class(src_dir, language, application_id):
-    """Create a new application class if one doesn't exist."""
+def create_application_class(src_dir, language, application_id, flutter_mode=False):
+    """Create a new application class if one doesn't exist. If flutter_mode, extend FlutterApplication."""
     path = os.path.join(src_dir, "MyApplication.kt" if language == 'kotlin' else "MyApplication.java")
-    if language == 'kotlin':
-        content = f"""
+    if flutter_mode:
+        if language == 'kotlin':
+            content = f"""
+package {application_id}
+
+import io.flutter.app.FlutterApplication
+import android.content.IntentFilter
+import com.netcore.android.Smartech
+import java.lang.ref.WeakReference
+
+class MyApplication : FlutterApplication() {{
+    override fun onCreate() {{
+        super.onCreate()
+        Smartech.getInstance(WeakReference(applicationContext)).initializeSdk(this)
+        Smartech.getInstance(WeakReference(applicationContext)).trackAppInstallUpdateBySmartech()
+    }}
+}}
+"""
+        else:
+            content = f"""
+package {application_id};
+
+import io.flutter.app.FlutterApplication;
+import android.content.IntentFilter;
+import com.netcore.android.Smartech;
+import java.lang.ref.WeakReference;
+
+public class MyApplication extends FlutterApplication {{
+    @Override
+    public void onCreate() {{
+        super.onCreate();
+        Smartech.getInstance(new WeakReference<>(getApplicationContext())).initializeSdk(this);
+        Smartech.getInstance(new WeakReference<>(getApplicationContext())).trackAppInstallUpdateBySmartech();
+    }}
+}}
+"""
+    else:
+        if language == 'kotlin':
+            content = f"""
 package {application_id}
 
 import android.app.Application
@@ -33,8 +75,8 @@ class MyApplication : Application() {{
     }}
 }}
 """
-    else:
-        content = f"""
+        else:
+            content = f"""
 package {application_id};
 
 import android.app.Application;

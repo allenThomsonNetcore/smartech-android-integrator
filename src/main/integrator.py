@@ -530,21 +530,21 @@ if __name__ == "__main__":
     print(" 🩺This tool will help you integrate the Smartech SDK into your Android project.")
     print("\nPlease provide the following information:")
     
-    print("🔧 Smartech SDK Integration for Android Native")
+    print("🔧 Smartech SDK Integration for Android Native or Flutter")
 
     while True:
         framework = input("Enter framework (android, flutter, react-native): ").strip().lower()
-        if framework in ["android"]:
-            
+        if framework in ["android", "flutter"]:
             break
-        print("🔧 Only Native Android is supported right now.")
-  
-  
+        print("🔧 Only Native Android and Flutter are supported right now.")
 
-    project_dir, app_id = get_user_input()
-    
-    print("\nStarting integration process...")
-    if integrate_smartech(project_dir, app_id):
-        print("\n ✅🧑🏻‍💻Integration completed successfully! ✅🧑🏻‍💻")
-    else:
-        print("\n ❌❌❌ Integration failed. Please check the error messages above. ❌❌❌")
+    if framework == "android":
+        project_dir, app_id = get_user_input()
+        print("\nStarting integration process...")
+        if integrate_smartech(project_dir, app_id):
+            print("\n ✅🧑🏻‍💻Integration completed successfully! ✅🧑🏻‍💻")
+        else:
+            print("\n ❌❌❌ Integration failed. Please check the error messages above. ❌❌❌")
+    elif framework == "flutter":
+        from src.flutter.main import integrate_smartech_flutter
+        integrate_smartech_flutter()

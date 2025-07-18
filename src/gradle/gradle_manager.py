@@ -41,12 +41,14 @@ def modify_gradle(gradle_path):
     
     # Add core dependency if not present
     core_dependency = 'implementation("com.netcore.android:smartech-sdk:3.6.2")' if is_kts else 'implementation "com.netcore.android:smartech-sdk:${SMARTECH_BASE_SDK_VERSION}"'
-    if 'com.netcore.android:smartech-base' not in content:
+    # Fix: Check for smartech-sdk, not smartech-base
+    if 'com.netcore.android:smartech-sdk' not in content:
         # Find the dependencies block
-        if is_kts:
+        if re.search(r'dependencies\s*\{', content):
             content = re.sub(r'(dependencies\s*\{)', r'\1\n    ' + core_dependency, content)
         else:
-            content = re.sub(r'(dependencies\s*\{)', r'\1\n    ' + core_dependency, content)
+            # No dependencies block found, append one at the end
+            content += f"\n\ndependencies {{\n    {core_dependency}\n}}\n"
     
     with open(gradle_path, 'w') as f:
         f.write(content)
@@ -115,10 +117,8 @@ def integrate_product_experience_dependency(gradle_path, ui_type):
 
 
 def add_core_sdk_version_to_properties(properties_path,gradle_path):
-    """Add or update Smartech Core SDK version in gradle.properties file."""
+    """Add or update Smartech Core SDK version in gradle.properties file. Always add, warn for .kts."""
     is_kts = gradle_path.endswith('.kts')
-    if is_kts:
-        return
     version_key = 'SMARTECH_BASE_SDK_VERSION'
     version_value = '3.5.8'
     
@@ -140,6 +140,8 @@ def add_core_sdk_version_to_properties(properties_path,gradle_path):
     # Write back to file
     with open(properties_path, 'w') as f:
         f.write(content.strip() + "\n")
+    if is_kts:
+        print(f"   ⚠️ Note: {version_key} added to gradle.properties, but you may need to reference it differently in build.gradle.kts.")
 
 def add_push_sdk_version_to_properties(properties_path,gradle_path):
     """Add or update Smartech Push SDK version in gradle.properties file."""
